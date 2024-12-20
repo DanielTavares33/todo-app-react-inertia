@@ -13,7 +13,7 @@
         @vite(['resources/js/app.jsx', 'resources/css/app.css'])
         @inertiaHead
     </head>
-    <body class="font-franklinMedium leading-none antialiased">
+    <body class="font-sans leading-none antialiased">
         @inertia
     </body>
 </html>
