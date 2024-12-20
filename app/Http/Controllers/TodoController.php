@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Todo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,15 +20,18 @@ class TodoController extends Controller
         ]);
     }
 
+    /**
+     * @throws ValidationException
+     */
     public function create(Request $request): RedirectResponse
     {
-        $data = $request->all();
+        $validator = Validator::make($request->all(), Todo::$createTodoRules);
 
-        Todo::create(
-            $request->validate([
-                'todo' => ['required', 'max:50', 'min:3']
-            ])
-        );
+        if ($validator->fails()) {
+            return Redirect::back()->withErrors($validator)->withInput();
+        }
+
+        Todo::create($validator->validated());
 
         return to_route('index');
     }
