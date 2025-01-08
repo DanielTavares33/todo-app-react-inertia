@@ -16,7 +16,7 @@ class TodoController extends Controller
     public function index(): Response
     {
         return Inertia::render('Index', [
-            'todos' => Todo::all()
+            'todos' => Todo::orderBy('created_at', 'desc')->get(),
         ]);
     }
 
@@ -28,7 +28,7 @@ class TodoController extends Controller
         $validator = Validator::make($request->all(), Todo::$createTodoRules);
 
         if ($validator->fails()) {
-            return Redirect::back()->withErrors($validator)->withInput();
+            return Redirect::intended()->withErrors($validator)->withInput();
         }
 
         Todo::create($validator->validated());
@@ -36,11 +36,18 @@ class TodoController extends Controller
         return to_route('index');
     }
 
-    public function show(int $id): Response
+    public function update(Request $request, int $id): RedirectResponse
     {
-        return Inertia::render('Show', [
-            'todo' => Todo::findOrFail($id)
-        ]);
+        $validated = Validator::make($request->all(), Todo::$createTodoRules);
+
+        if ($validated->fails()) {
+            return Redirect::back()->withErrors($validated)->withInput();
+        }
+
+        $todo = Todo::findOrFail($id);
+        $todo->update($validated->validated());
+
+        return to_route('index')->with('success', 'Todo updated successfully.');
     }
 
     public function destroy(int $id): RedirectResponse

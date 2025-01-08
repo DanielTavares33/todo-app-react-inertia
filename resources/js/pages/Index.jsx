@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {useForm, router} from "@inertiajs/react"
 import {Button} from "../components/ui/button.tsx"
 import {Input} from "../components/ui/input.tsx"
@@ -7,24 +7,38 @@ import {Plus, Trash, SquarePen} from "lucide-react"
 import {
     Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,
 } from "../components/ui/table.tsx"
-
+import EditTodoDialog from './components/EditTodoDialog.jsx'
 
 export default function Index({todos}) {
     const {data, setData, post, processing, errors} = useForm({
         todo: ''
     });
+    const [completedTodos, setCompletedTodos] = useState(new Set())
 
     function submit(e) {
         e.preventDefault()
-        post('/create') // TODO: Add notification onSuccess
+        post('/create')
     }
 
     function destroy(id) {
         post(`/destroy/${id}`)
     }
 
-    function gotToEditPage(id) {
-        router.visit(`/edit/${id}`)
+    function handleChange(e) {
+        const value = e.target.value;
+        setData('todo', value)
+    }
+
+    const toggleComplete = (id) => {
+        setCompletedTodos((prev) => {
+            const newCompletedTodos = new Set(prev);
+            if (newCompletedTodos.has(id)) {
+                newCompletedTodos.delete(id)
+            } else {
+                newCompletedTodos.add(id)
+            }
+            return newCompletedTodos
+        })
     }
 
     return (
@@ -33,7 +47,7 @@ export default function Index({todos}) {
                 <form onSubmit={submit}>
                     <Label htmlFor="todo">Add Todo</Label>
                     <div className="flex items-center space-x-2">
-                        <Input type="text" id="todo" value={data.todo} onChange={e => setData('todo', e.target.value)}/>
+                        <Input type="text" id="todo" value={data.todo} onChange={handleChange}/>
                         <Button type="submit" disabled={processing}>
                             <Plus/>
                         </Button>
@@ -53,15 +67,12 @@ export default function Index({todos}) {
                     </TableHeader>
                     <TableBody>
                         {todos.map((todo) => (
-                            <TableRow key={todo.id}>
+                            <TableRow key={todo.id} onClick={() => toggleComplete(todo.id)} className={completedTodos.has(todo.id) ? 'line-through' : ''}>
                                 <TableCell className="font-medium">{todo.todo}</TableCell>
                                 <TableCell
                                     className="font-medium text-right">{new Date(todo.created_at).toLocaleString()}</TableCell>
                                 <TableCell className="flex gap-2 justify-end">
-                                    {/* TODO: Add action to edit selected row using Alert Dialog component*/}
-                                    <Button className="bg-amber-600 hover:bg-amber-600/90" size="sm">
-                                        <SquarePen/>
-                                    </Button>
+                                    <EditTodoDialog todo={todo} />
                                     <Button variant="destructive" size="sm" onClick={() => destroy(todo.id)}>
                                         <Trash/>
                                     </Button>
